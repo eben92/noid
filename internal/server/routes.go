@@ -28,17 +28,23 @@ func (s *FiberServer) healthHandler(c *fiber.Ctx) error {
 // sign up user
 func (s *FiberServer) signUpHandler(c *fiber.Ctx) error {
 	c.Accepts("application/json")
-	u := new(database.User)
+	p := new(database.SignupPayload)
 
-	if err := c.BodyParser(u); err != nil {
+	if err := c.BodyParser(p); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(err)
 	}
 
-	err := s.db.CreateUser(u)
+	u, err := database.NewUser(p.FullName, p.Password, p.Email, p.Msisdn)
+
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(err)
+	}
+
+	err = s.db.CreateUser(u)
 
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(err)
 	}
 
-	return c.JSON(u)
+	return c.Status(fiber.StatusCreated).JSON(u)
 }
